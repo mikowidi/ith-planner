@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITH Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <p class="brand-name">ITH Planner</p>
+    <p class="brand-clock" id="clockDisplay">--:--:--</p>
+    <p class="brand-date"  id="dateDisplay">Bali · WITA</p>
+  </div>
+  <nav class="nav-section">
+    <div class="nav-item active" data-view="kanban"><span class="nav-icon">⊞</span><span class="nav-label">Dashboard</span></div>
+    <div class="nav-item" data-view="my"><span class="nav-icon">◎</span><span class="nav-label">My tasks</span></div>
+    <div class="nav-item" data-view="backlog"><span class="nav-icon">⏱</span><span class="nav-label">Backlog</span><span class="nav-badge red" id="backlogBadge">0</span></div>
+    <div class="nav-item" data-view="tim"><span class="nav-icon">⊹</span><span class="nav-label">Tim view</span></div>
+  </nav>
+  <div class="sidebar-user" id="sidebarUser"></div>
+</aside>
+
+<div id="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <p id="topbarTitle">Dashboard</p>
+      <span id="topbarSub">memuat...</span>
+    </div>
+    <div class="topbar-right">
+      <div id="dashControls" style="display:none; align-items:center; gap:8px;">
+        <div class="sort-control">
+          <button class="sort-btn active" data-sort="edited">Terakhir diedit</button>
+          <button class="sort-btn"        data-sort="created">Terbaru dibuat</button>
+        </div>
+        <div class="view-toggle">
+          <button class="view-btn active" data-vt="kanban">Progress</button>
+          <button class="view-btn"        data-vt="priority">Prioritas</button>
+        </div>
+      </div>
+      <button class="notif-btn" id="notifBtn" title="Notifikasi" aria-label="Notifikasi">
+        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="notif-badge" id="notifBadge">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KANBAN -->
+  <div class="view active" id="kanbanView">
+    <div class="kanban-col">
+      <div class="col-header"><div class="col-dot" style="background:#555"></div><span class="col-title">To do</span><span class="col-count" id="cnt-todo">0</span></div>
+      <div class="col-cards" id="col-todo" data-status="todo"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="col-header"><div class="col-dot" style="background:var(--prog-dot)"></div><span class="col-title">In progress</span><span class="col-count" id="cnt-inprogress">0</span></div>
+      <div class="col-cards" id="col-inprogress" data-status="inprogress"></div>
+    </div>
+    <div class="kanban-col">
+      <div class="col-header"><div class="col-dot" style="background:var(--done-dot)"></div><span class="col-title">Done hari ini</span><span class="col-count" id="cnt-done">0</span></div>
+      <div class="col-cards" id="col-done" data-status="done"></div>
+    </div>
+  </div>
+
+  <!-- PRIORITY VIEW -->
+  <div class="view" id="priorityView">
+    <div id="priorityContent" style="width:100%;overflow-y:auto;padding:16px 20px;"></div>
+  </div>
+
+  <!-- MY TASKS -->
+  <div class="view" id="myView">
+    <div id="myContent" style="width:100%;overflow-y:auto;padding:16px 20px;"></div>
+  </div>
+
+  <!-- BACKLOG -->
+  <div class="view" id="backlogView">
+    <div style="width:100%;overflow-y:auto;padding:16px 20px;">
+      <div class="backlog-header"><p>Backlog — task belum dikerjakan</p><span>Diurutkan dari yang paling lama</span></div>
+      <div id="backlogContent"></div>
+    </div>
+  </div>
+
+  <!-- TIM VIEW -->
+  <div class="view" id="timView">
+    <div class="tim-filters">
+      <div class="filter-group">
+        <span class="filter-label">Orang</span>
+        <div class="filter-chips" id="filterPerson"><button class="chip active" data-uid="all">Semua</button></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Status</span>
+        <div class="filter-chips" id="filterStatus">
+          <button class="chip active" data-status="all">Semua</button>
+          <button class="chip" data-status="todo">To do</button>
+          <button class="chip" data-status="inprogress">In progress</button>
+          <button class="chip" data-status="done">Selesai</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Tanggal</span>
+        <div class="tim-date-range">
+          <input type="date" id="timDateFrom" /><span class="tim-date-sep">—</span><input type="date" id="timDateTo" />
+        </div>
+      </div>
+    </div>
+    <div id="timViewContent"></div>
+  </div>
+</div>
+
+<button id="fab" title="Tambah task (N)">+</button>
+
+<!-- NOTIFICATION PANEL -->
+<div id="notifPanel">
+  <div class="notif-panel-header">
+    <span class="notif-panel-title">Notifikasi</span>
+    <span class="notif-mark-all" id="markAllRead">Tandai semua dibaca</span>
+  </div>
+  <div class="notif-list" id="notifList"><div class="notif-empty">Belum ada notifikasi</div></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modalTitle">Task baru</span>
+      <span class="modal-close" id="modalClose">✕</span>
+    </div>
+
+    <div class="form-group" id="statusRow">
+      <label>Status</label>
+      <div class="status-btns">
+        <button class="status-btn active" data-s="todo"       tabindex="0">To do</button>
+        <button class="status-btn"        data-s="inprogress" tabindex="0">In progress</button>
+        <button class="status-btn"        data-s="done"       tabindex="0">Selesai</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Judul <span class="req-mark">*</span></label>
+      <input type="text" id="taskTitle" placeholder="Apa yang perlu dikerjakan?" />
+    </div>
+
+    <div class="form-group">
+      <label>Deskripsi (opsional)</label>
+      <textarea id="taskDesc" placeholder="Detail task, konteks, atau catatan..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Prioritas <span class="req-mark">*</span></label>
+      <div class="priority-btns">
+        <button class="prio-btn"            data-p="high" tabindex="0">High</button>
+        <button class="prio-btn active-med" data-p="med"  tabindex="0">Med</button>
+        <button class="prio-btn"            data-p="low"  tabindex="0">Low</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tanggal task <span class="req-mark">*</span></label>
+      <input type="date" id="taskDate" />
+    </div>
+
+    <div class="form-group">
+      <label>Assign ke <span class="req-mark">*</span></label>
+      <div class="assignee-checkboxes" id="assigneeList"></div>
+    </div>
+
+    <div id="historySection" style="display:none;">
+      <div class="history-list">
+        <p class="history-title">Riwayat perubahan</p>
+        <div id="historyItems"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-danger" id="btnDelete" style="display:none;">Hapus</button>
+      <button class="btn-cancel" id="btnCancel">Batal</button>
+      <button class="btn-save"   id="btnSave">Simpan</button>
+    </div>
+    <p class="kbd-hint">Ctrl+Enter simpan · Esc tutup · Shift+Enter baris baru di deskripsi</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script type="module">
+import { requireAuth, signOut, upsertProfile, getAllProfiles } from './js/auth.js'
+import {
+  getActiveTasks, getTodayDoneTasks, getBacklogTasks, getAllTasksForTimView,
+  createTask, updateTask, deleteTask, updateAssignees,
+  getTaskHistory, subscribeToTasks,
+  getNotifications, markNotificationRead, markAllNotificationsRead,
+  subscribeToNotifications, calcOverdueDays
+} from './js/tasks.js'
+
+/* ── STATE ── */
+let currentUser    = null
+let allProfiles    = []
+let activeTasks    = []
+let doneTasks      = []
+let currentView    = 'kanban'
+let editingTaskId  = null
+let selectedPriority = 'med'
+let selectedStatus   = 'todo'
+let draggedTaskId  = null
+let isDragging     = false
+let dashSort       = 'edited'
+let notifications  = []
+
+const COLORS = ['#a89ae0','#6ab8a0','#e08878','#c9b99a','#7aabf0']
+const timFilters = { assigneeIds: [], statuses: [], dateFrom: '', dateTo: '' }
+const prioOrder  = { high: 0, med: 1, low: 2 }
+const sortByPrio = (a, b) => (prioOrder[a.priority] ?? 1) - (prioOrder[b.priority] ?? 1)
+
+/* ── CLOCK ── */
+function updateClock() {
+  const bali = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Makassar' }))
+  const pad = n => String(n).padStart(2,'0')
+  document.getElementById('clockDisplay').textContent =
+    `${pad(bali.getHours())}:${pad(bali.getMinutes())}:${pad(bali.getSeconds())}`
+  document.getElementById('dateDisplay').textContent =
+    bali.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Asia/Makassar' })
+}
+setInterval(updateClock, 1000); updateClock()
+
+/* ── HELPERS ── */
+function initials(name) { return (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) }
+function profileById(id) { return allProfiles.find(p => p.id === id) || null }
+
+function avatarEl(profile, size = 20) {
+  const el = document.createElement('div')
+  el.className = size <= 20 ? 'av-sm' : 'avatar'
+  el.style.background = (profile?.avatar_color || '#555') + '22'
+  el.style.color = profile?.avatar_color || '#555'
+  if (size !== 20 && size !== 32) {
+    el.style.width = size+'px'; el.style.height = size+'px'
+    el.style.fontSize = Math.floor(size*0.38)+'px'
+  }
+  el.textContent = initials(profile?.name || '?')
+  return el
+}
+
+function fmtDateTime(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short' }) + ' ' +
+         d.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })
+}
+
+function fmtDate(ts) {
+  if (!ts) return ''
+  return new Date(ts).toLocaleDateString('id-ID', { day:'numeric', month:'short' })
+}
+
+function fmtDateFull(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+}
+
+function sortByDash(tasks) {
+  return [...tasks].sort((a,b) => {
+    if (dashSort === 'edited') return new Date(b.last_edited_at||b.created_at) - new Date(a.last_edited_at||a.created_at)
+    return new Date(b.created_at) - new Date(a.created_at)
+  })
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg; t.classList.add('show')
+  clearTimeout(t._timer)
+  t._timer = setTimeout(() => t.classList.remove('show'), 2500)
+}
+
+/* ── BUILD CARD ── */
+function buildCard(task) {
+  const card = document.createElement('div')
+  card.className = 'task-card' + (task.status === 'done' ? ' done-card' : '')
+  card.dataset.id = task.id; card.draggable = true
+
+  const pClass = { high:'p-high', med:'p-med', low:'p-low' }[task.priority] || 'p-med'
+  const pLabel = { high:'High', med:'Med', low:'Low' }[task.priority] || 'Med'
+  const desc = task.description ? `<p class="card-desc">${task.description}</p>` : ''
+
+  let footerLine = ''
+  if (task.status === 'done' && task.completed_at) {
+    footerLine = `Selesai · ${fmtDateTime(task.completed_at)}`
+  } else if (task.last_edited_by && task.last_edited_at) {
+    const editor = profileById(task.last_edited_by)
+    footerLine = `Diedit ${editor?.name||'seseorang'} · ${fmtDateTime(task.last_edited_at)}`
+  } else {
+    const creator = profileById(task.created_by)
+    footerLine = `Dibuat ${creator?.name||'seseorang'} · ${fmtDateTime(task.created_at)}`
+  }
+
+  const overdueDays = calcOverdueDays(task.task_date)
+  const isOverdue = overdueDays > 0 && task.status !== 'done'
+
+  card.innerHTML = `
+    <p class="card-title">${task.title}</p>
+    ${desc}
+    <div class="card-meta"><span class="priority-badge ${pClass}">${pLabel}</span></div>
+    <div class="assignees" id="av-${task.id}"></div>
+    <div class="card-footer">
+      <span class="footer-text">${footerLine}</span>
+      ${isOverdue ? `<span class="overdue-text">overdue ${overdueDays} hari</span>` : ''}
+    </div>
+  `
+
+  const avCon = card.querySelector(`#av-${task.id}`)
+  const assignees = (task.task_assignees||[]).map(a=>a.profiles).filter(Boolean)
+  assignees.slice(0,3).forEach(p => avCon.appendChild(avatarEl(p,20)))
+  if (assignees.length) {
+    const names = document.createElement('span'); names.className = 'assignee-names'
+    names.textContent = assignees.map(p=>p.name||'User').join(', ')
+    avCon.appendChild(names)
+  }
+
+  card.addEventListener('dragstart', (e) => { isDragging = true; draggedTaskId = task.id; card.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move' })
+  card.addEventListener('dragend',   () =>  { isDragging = false; draggedTaskId = null; card.classList.remove('dragging') })
+  let clickOk = false
+  card.addEventListener('mousedown', () => { clickOk = true })
+  card.addEventListener('mousemove', () => { clickOk = false })
+  card.addEventListener('mouseup',   () => { if (clickOk && !isDragging) openEditModal(task.id) })
+  return card
+}
+
+/* ── RENDER KANBAN ── */
+function renderKanban() {
+  const todo   = sortByDash(activeTasks.filter(t => t.status === 'todo'))
+  const inprog = sortByDash(activeTasks.filter(t => t.status === 'inprogress'))
+  const done   = sortByDash(doneTasks)
+
+  const fill = (colId, cntId, tasks) => {
+    const col = document.getElementById(colId); col.innerHTML = ''
+    tasks.forEach(t => col.appendChild(buildCard(t)))
+    if (!tasks.length) {
+      const e = document.createElement('div')
+      e.style.cssText = 'padding:20px 0;text-align:center;color:var(--text-muted);font-size:12px;'
+      e.textContent = '—'; col.appendChild(e)
+    }
+    document.getElementById(cntId).textContent = tasks.length
+  }
+
+  fill('col-todo','cnt-todo',todo)
+  fill('col-inprogress','cnt-inprogress',inprog)
+  fill('col-done','cnt-done',done)
+  setupDrop()
+}
+
+/* ── DRAG DROP ── */
+function setupDrop() {
+  document.querySelectorAll('.col-cards').forEach(col => {
+    col.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect='move'; col.classList.add('drag-over') })
+    col.addEventListener('dragleave', (e) => { if (!col.contains(e.relatedTarget)) col.classList.remove('drag-over') })
+    col.addEventListener('drop', async (e) => {
+      e.preventDefault(); col.classList.remove('drag-over')
+      if (!draggedTaskId) return
+      const newStatus = col.dataset.status
+      const all = [...activeTasks,...doneTasks]
+      const task = all.find(t => t.id === draggedTaskId)
+      if (!task || task.status === newStatus) return
+      await updateTask(draggedTaskId, { status:newStatus }, currentUser.id)
+      await loadTasks()
+    })
+  })
+}
+
+/* ── RENDER PRIORITY VIEW ── */
+function renderPriorityView() {
+  const con = document.getElementById('priorityContent'); con.innerHTML = ''
+  const all = sortByDash([...activeTasks,...doneTasks])
+  ;[
+    { key:'high', label:'High', cls:'p-high' },
+    { key:'med',  label:'Med',  cls:'p-med' },
+    { key:'low',  label:'Low',  cls:'p-low' }
+  ].forEach(g => {
+    const tasks = all.filter(t => t.priority === g.key)
+    if (!tasks.length) return
+    const sec = document.createElement('div'); sec.className = 'list-section'
+    sec.innerHTML = `<p class="list-section-title"><span class="priority-badge ${g.cls}">${g.label}</span>&nbsp;· ${tasks.length}</p>`
+    tasks.forEach(t => sec.appendChild(buildListItem(t)))
+    con.appendChild(sec)
+  })
+  if (!con.children.length) con.innerHTML = '<div class="empty-state">Belum ada task.</div>'
+}
+
+/* ── RENDER MY TASKS — fixed sort, two groups, no checkmark ── */
+function renderMyTasks() {
+  const con = document.getElementById('myContent'); con.innerHTML = ''
+  if (!currentUser) return
+
+  const mine = [...activeTasks,...doneTasks].filter(t =>
+    (t.task_assignees||[]).some(a => a.user_id === currentUser.id)
+  )
+  const ongoing = mine.filter(t => t.status !== 'done').sort(sortByPrio)
+  const done    = mine.filter(t => t.status === 'done').sort(sortByPrio)
+
+  if (!mine.length) { con.innerHTML = '<div class="empty-state">Belum ada task yang di-assign ke kamu.</div>'; return }
+
+  if (ongoing.length) {
+    const sec = document.createElement('div'); sec.className = 'list-section'
+    sec.innerHTML = `<p class="list-section-title">Sedang dikerjakan · ${ongoing.length}</p>`
+    ongoing.forEach(t => sec.appendChild(buildMyTaskItem(t, false)))
+    con.appendChild(sec)
+  }
+  if (done.length) {
+    const sec = document.createElement('div'); sec.className = 'list-section'
+    sec.innerHTML = `<p class="list-section-title">Selesai · ${done.length}</p>`
+    done.forEach(t => sec.appendChild(buildMyTaskItem(t, true)))
+    con.appendChild(sec)
+  }
+}
+
+function buildMyTaskItem(task, isDoneGroup) {
+  const item = document.createElement('div'); item.className = 'list-item'
+  const pClass = { high:'p-high', med:'p-med', low:'p-low' }[task.priority] || 'p-med'
+  const titleStyle = isDoneGroup ? 'opacity:0.55;text-decoration:line-through;' : ''
+  item.innerHTML = `
+    <span class="priority-badge ${pClass}" style="flex-shrink:0">${task.priority}</span>
+    <span class="list-title" style="${titleStyle}">${task.title}</span>
+    <div class="list-assignees" id="mlav-${task.id}"></div>
+    <span class="list-meta">${fmtDate(task.task_date||task.created_at)}</span>
+  `
+  ;(task.task_assignees||[]).map(a=>a.profiles).filter(Boolean).slice(0,3)
+    .forEach(p => item.querySelector(`#mlav-${task.id}`).appendChild(avatarEl(p,20)))
+  item.addEventListener('click', () => openEditModal(task.id))
+  return item
+}
+
+/* ── RENDER BACKLOG ── */
+async function renderBacklog() {
+  const con = document.getElementById('backlogContent'); con.innerHTML = '<div class="empty-state">Memuat...</div>'
+  const tasks = await getBacklogTasks()
+  const sorted = [...tasks].sort((a,b) => new Date(a.task_date) - new Date(b.task_date))
+  document.getElementById('backlogBadge').textContent = sorted.length
+  con.innerHTML = ''
+  if (!sorted.length) { con.innerHTML = '<div class="empty-state">✓ Tidak ada task yang tertunda!</div>'; return }
+  sorted.forEach(task => {
+    const age = calcOverdueDays(task.task_date)
+    const ageClass = age >= 7 ? 'old' : age >= 3 ? 'mid' : 'new'
+    const item = document.createElement('div'); item.className = 'backlog-item'
+    item.innerHTML = `
+      <span class="backlog-age ${ageClass}">${age}h</span>
+      <span class="backlog-title">${task.title}</span>
+      <div class="backlog-assignees" id="bav-${task.id}"></div>
+      <button class="btn-done-quick" data-id="${task.id}">✓ Selesai</button>
+    `
+    ;(task.task_assignees||[]).map(a=>a.profiles).filter(Boolean).slice(0,2)
+      .forEach(p => item.querySelector(`#bav-${task.id}`).appendChild(avatarEl(p,20)))
+    item.querySelector('.btn-done-quick').addEventListener('click', async (e) => {
+      e.stopPropagation()
+      await updateTask(task.id, { status:'done' }, currentUser.id)
+      renderBacklog(); await loadTasks()
+    })
+    item.addEventListener('click', e => { if (!e.target.classList.contains('btn-done-quick')) openEditModal(task.id) })
+    con.appendChild(item)
+  })
+}
+
+/* ── RENDER TIM VIEW — flat list ── */
+async function renderTimView() {
+  const con = document.getElementById('timViewContent'); con.innerHTML = '<div class="empty-state">Memuat...</div>'
+  const tasks = await getAllTasksForTimView({
+    assigneeIds: timFilters.assigneeIds,
+    statuses:    timFilters.statuses,
+    dateFrom:    timFilters.dateFrom || null,
+    dateTo:      timFilters.dateTo   || null
+  })
+
+  con.innerHTML = ''
+  if (!tasks.length) { con.innerHTML = '<div class="empty-state">Tidak ada task yang sesuai filter.</div>'; return }
+
+  const sorted = [...tasks].sort((a,b) => {
+    const da = a.task_date || a.created_at?.split('T')[0] || ''
+    const db = b.task_date || b.created_at?.split('T')[0] || ''
+    return db.localeCompare(da)
+  })
+
+  if (timFilters.assigneeIds.length === 1) {
+    // Single person: flat list
+    sorted.forEach(t => con.appendChild(buildTimListItem(t)))
+  } else {
+    // Multiple/all: group by person
+    allProfiles.forEach(profile => {
+      const pt = sorted.filter(t => (t.task_assignees||[]).some(a => a.user_id === profile.id))
+      if (!pt.length) return
+      const sec = document.createElement('div'); sec.className = 'person-section'
+      const hdr = document.createElement('div'); hdr.className = 'person-header'
+      hdr.appendChild(avatarEl(profile, 24))
+      const nm = document.createElement('span'); nm.className = 'person-name'; nm.textContent = profile.name
+      const cnt = document.createElement('span'); cnt.className = 'person-count'; cnt.textContent = pt.length + ' task'
+      hdr.appendChild(nm); hdr.appendChild(cnt)
+      sec.appendChild(hdr)
+      pt.forEach(t => sec.appendChild(buildTimListItem(t)))
+      con.appendChild(sec)
+    })
+    const unassigned = sorted.filter(t => !(t.task_assignees||[]).length)
+    if (unassigned.length) {
+      const sec = document.createElement('div'); sec.className = 'person-section'
+      sec.innerHTML = `<div class="person-header"><span class="person-name" style="color:var(--text-muted)">Tanpa assignee</span><span class="person-count">${unassigned.length}</span></div>`
+      unassigned.forEach(t => sec.appendChild(buildTimListItem(t)))
+      con.appendChild(sec)
+    }
+  }
+  if (!con.children.length) con.innerHTML = '<div class="empty-state">Tidak ada task yang sesuai filter.</div>'
+}
+
+/* ── LIST ITEM BUILDERS ── */
+function buildListItem(task) {
+  const item = document.createElement('div'); item.className = 'list-item'
+  const pClass = { high:'p-high', med:'p-med', low:'p-low' }[task.priority] || 'p-med'
+  item.innerHTML = `
+    <span class="priority-badge ${pClass}" style="flex-shrink:0">${task.priority}</span>
+    <span class="list-title">${task.status === 'done' ? '✓ ' : ''}${task.title}</span>
+    <div class="list-assignees" id="lav-${task.id}"></div>
+    <span class="list-meta">${fmtDate(task.task_date||task.created_at)}</span>
+  `
+  ;(task.task_assignees||[]).map(a=>a.profiles).filter(Boolean).slice(0,3)
+    .forEach(p => item.querySelector(`#lav-${task.id}`).appendChild(avatarEl(p,20)))
+  item.addEventListener('click', () => openEditModal(task.id))
+  return item
+}
+
+function buildTimListItem(task) {
+  const item = document.createElement('div'); item.className = 'list-item'
+  const pClass = { high:'p-high', med:'p-med', low:'p-low' }[task.priority] || 'p-med'
+  const sColors = { todo:'var(--text-muted)', inprogress:'#80c0ff', done:'var(--teal)' }
+  const sLabels = { todo:'To do', inprogress:'In progress', done:'Selesai' }
+  item.innerHTML = `
+    <span class="priority-badge ${pClass}" style="flex-shrink:0">${task.priority}</span>
+    <span class="list-title">${task.title}</span>
+    <span style="font-size:11px;color:${sColors[task.status]||'var(--text-muted)'};white-space:nowrap;flex-shrink:0">${sLabels[task.status]||task.status}</span>
+    <div class="list-assignees" id="tav-${task.id}" style="flex-shrink:0"></div>
+    <span class="list-meta">${fmtDate(task.task_date||task.created_at)}</span>
+  `
+  ;(task.task_assignees||[]).map(a=>a.profiles).filter(Boolean).slice(0,3)
+    .forEach(p => item.querySelector(`#tav-${task.id}`).appendChild(avatarEl(p,20)))
+  item.addEventListener('click', () => openEditModal(task.id, true))
+  return item
+}
+
+/* ── TIM VIEW FILTERS ── */
+function setupTimViewFilters() {
+  const today = new Date().toISOString().split('T')[0]
+  document.getElementById('timDateFrom').value = today
+  document.getElementById('timDateTo').value   = today
+  timFilters.dateFrom = today; timFilters.dateTo = today
+
+  const personChips = document.getElementById('filterPerson')
+  personChips.innerHTML = '<button class="chip active" data-uid="all">Semua</button>'
+  allProfiles.forEach(p => {
+    const chip = document.createElement('button'); chip.className = 'chip'
+    chip.dataset.uid = p.id; chip.textContent = p.name; personChips.appendChild(chip)
+  })
+
+  personChips.addEventListener('click', e => {
+    const chip = e.target.closest('.chip'); if (!chip) return
+    const uid = chip.dataset.uid
+    if (uid === 'all') {
+      personChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'))
+      chip.classList.add('active'); timFilters.assigneeIds = []
+    } else {
+      personChips.querySelector('[data-uid="all"]').classList.remove('active')
+      chip.classList.toggle('active')
+      timFilters.assigneeIds = [...personChips.querySelectorAll('.chip.active:not([data-uid="all"])')].map(c => c.dataset.uid)
+      if (!timFilters.assigneeIds.length) personChips.querySelector('[data-uid="all"]').classList.add('active')
+    }
+    renderTimView()
+  })
+
+  document.getElementById('filterStatus').addEventListener('click', e => {
+    const chip = e.target.closest('.chip'); if (!chip) return
+    const s = chip.dataset.status
+    if (s === 'all') {
+      document.querySelectorAll('#filterStatus .chip').forEach(c => c.classList.remove('active'))
+      chip.classList.add('active'); timFilters.statuses = []
+    } else {
+      document.querySelector('#filterStatus [data-status="all"]').classList.remove('active')
+      chip.classList.toggle('active')
+      timFilters.statuses = [...document.querySelectorAll('#filterStatus .chip.active:not([data-status="all"])')].map(c => c.dataset.status)
+      if (!timFilters.statuses.length) document.querySelector('#filterStatus [data-status="all"]').classList.add('active')
+    }
+    renderTimView()
+  })
+
+  document.getElementById('timDateFrom').addEventListener('change', e => { timFilters.dateFrom = e.target.value; renderTimView() })
+  document.getElementById('timDateTo').addEventListener('change',   e => { timFilters.dateTo   = e.target.value; renderTimView() })
+}
+
+/* ── MODAL STATUS/PRIO ── */
+function setActiveStatus(s) {
+  selectedStatus = s
+  document.querySelectorAll('.status-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.s === s))
+}
+
+function renderPrioBtns() {
+  document.querySelectorAll('.prio-btn').forEach(btn => {
+    btn.className = 'prio-btn'
+    if (btn.dataset.p === selectedPriority) btn.classList.add('active-' + selectedPriority)
+  })
+}
+
+/* ── RENDER ASSIGNEE LIST — with keyboard nav ── */
+function renderAssigneeList(selectedIds) {
+  const con = document.getElementById('assigneeList'); con.innerHTML = ''
+  con.style.outline = '' // clear validation highlight
+  allProfiles.forEach(profile => {
+    const item = document.createElement('div')
+    item.className = 'assignee-check' + (selectedIds.includes(profile.id) ? ' selected' : '')
+    item.dataset.uid = profile.id; item.tabIndex = 0
+    item.appendChild(avatarEl(profile, 24))
+    const name = document.createElement('span'); name.className = 'assignee-check-name'
+    name.textContent = profile.name || profile.email || 'User'
+    item.appendChild(name)
+
+    item.addEventListener('click', () => item.classList.toggle('selected'))
+
+    item.addEventListener('keydown', e => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault(); item.classList.toggle('selected')
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        const next = item.nextElementSibling
+        if (next?.classList.contains('assignee-check')) next.focus()
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        const prev = item.previousElementSibling
+        if (prev?.classList.contains('assignee-check')) prev.focus()
+      }
+      if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); saveTask() }
+    })
+
+    con.appendChild(item)
+  })
+}
+
+/* ── RENDER HISTORY — 3 items + expand toggle ── */
+function renderHistoryItems(hist) {
+  const MAX = 3
+  const histItems = document.getElementById('historyItems')
+  histItems.innerHTML = ''
+
+  function makeHistEl(h) {
+    const editor = profileById(h.edited_by)
+    const fieldLabel = { title:'judul', description:'deskripsi', status:'status', priority:'prioritas', task_date:'tanggal' }[h.field_changed] || h.field_changed
+    const el = document.createElement('div'); el.className = 'history-item'
+    el.innerHTML = `
+      <div class="history-dot"></div>
+      <div>
+        <p class="history-text"><strong>${editor?.name||'Seseorang'}</strong> ubah ${fieldLabel}: <em>${h.old_value||'—'}</em> → <em>${h.new_value}</em></p>
+        <p class="history-time">${new Date(h.edited_at).toLocaleString('id-ID')}</p>
+      </div>
+    `
+    return el
+  }
+
+  hist.slice(0, MAX).forEach(h => histItems.appendChild(makeHistEl(h)))
+
+  if (hist.length > MAX) {
+    const remaining = hist.slice(MAX)
+    let expanded = false
+    const expandedEls = []
+
+    const btn = document.createElement('button'); btn.className = 'history-expand-btn'
+    btn.textContent = `Lihat ${remaining.length} perubahan lainnya`
+
+    btn.addEventListener('click', () => {
+      if (!expanded) {
+        remaining.forEach(h => {
+          const el = makeHistEl(h)
+          histItems.insertBefore(el, btn)
+          expandedEls.push(el)
+        })
+        btn.textContent = 'Sembunyikan'
+        expanded = true
+      } else {
+        expandedEls.forEach(el => el.remove())
+        expandedEls.length = 0
+        btn.textContent = `Lihat ${remaining.length} perubahan lainnya`
+        expanded = false
+      }
+    })
+    histItems.appendChild(btn)
+  }
+}
+
+/* ── VALIDATION ── */
+function validateForm() {
+  let valid = true
+  const titleEl = document.getElementById('taskTitle')
+  titleEl.style.borderColor = ''
+
+  if (!titleEl.value.trim()) {
+    titleEl.style.borderColor = 'var(--danger)'
+    valid = false
+  }
+
+  const assignedCount = document.querySelectorAll('.assignee-check.selected').length
+  if (!assignedCount) {
+    document.getElementById('assigneeList').style.outline = '1px solid var(--danger)'
+    valid = false
+  }
+
+  if (!valid) showToast('Ada field yang wajib diisi')
+  return valid
+}
+
+/* ── MODAL OPEN/CLOSE ── */
+function openCreateModal() {
+  editingTaskId = null; selectedPriority = 'med'; selectedStatus = 'todo'
+  document.getElementById('modalTitle').textContent = 'Task baru'
+  document.getElementById('taskTitle').value = ''
+  document.getElementById('taskTitle').style.borderColor = ''
+  document.getElementById('taskDesc').value = ''
+  document.getElementById('taskDate').value = new Date().toISOString().split('T')[0]
+  document.getElementById('btnDelete').style.display = 'none'
+  document.getElementById('historySection').style.display = 'none'
+  setActiveStatus('todo'); renderPrioBtns(); renderAssigneeList([])
+  openModal()
+  requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById('taskTitle').focus()))
+}
+
+async function openEditModal(taskId, fromTimView = false) {
+  const allMerged = [...activeTasks,...doneTasks]
+  let task = allMerged.find(t => t.id === taskId)
+  if (!task) { const all = await getAllTasksForTimView(); task = all.find(t => t.id === taskId) }
+  if (!task) return
+
+  editingTaskId    = taskId
+  selectedPriority = task.priority || 'med'
+  selectedStatus   = task.status   || 'todo'
+
+  document.getElementById('modalTitle').textContent = 'Edit task'
+  document.getElementById('taskTitle').value   = task.title
+  document.getElementById('taskTitle').style.borderColor = ''
+  document.getElementById('taskDesc').value    = task.description || ''
+  document.getElementById('taskDate').value    = task.task_date || new Date().toISOString().split('T')[0]
+  document.getElementById('btnDelete').style.display = 'block'
+
+  setActiveStatus(selectedStatus); renderPrioBtns()
+  renderAssigneeList((task.task_assignees||[]).map(a=>a.user_id))
+
+  const hist = await getTaskHistory(taskId)
+  const histSec = document.getElementById('historySection')
+  if (hist.length) { histSec.style.display = 'block'; renderHistoryItems(hist) }
+  else { histSec.style.display = 'none' }
+
+  openModal()
+  document.querySelector('.status-btn.active')?.focus()
+}
+
+function openModal()  { document.getElementById('taskModal').classList.add('open') }
+function closeModal() { document.getElementById('taskModal').classList.remove('open') }
+
+async function saveTask() {
+  if (!validateForm()) return
+
+  const btnSave = document.getElementById('btnSave')
+  btnSave.disabled = true; btnSave.textContent = 'Menyimpan...'
+
+  const assigneeIds = [...document.querySelectorAll('.assignee-check.selected')].map(i => i.dataset.uid)
+  const taskData = {
+    title:       document.getElementById('taskTitle').value.trim(),
+    description: document.getElementById('taskDesc').value.trim(),
+    priority:    selectedPriority,
+    status:      selectedStatus,
+    task_date:   document.getElementById('taskDate').value
+  }
+
+  try {
+    if (editingTaskId) {
+      const allMerged = [...activeTasks,...doneTasks]
+      const task = allMerged.find(t => t.id === editingTaskId)
+      await updateTask(editingTaskId, taskData, currentUser.id)
+      await updateAssignees(editingTaskId, assigneeIds, currentUser.id, task?.title || taskData.title)
+    } else {
+      await createTask(taskData, assigneeIds, currentUser.id)
+    }
+    closeModal(); await loadTasks()
+    if (currentView === 'tim') renderTimView()
+  } catch(e) { console.error(e) }
+
+  btnSave.disabled = false; btnSave.textContent = 'Simpan'
+}
+
+/* ── KEYBOARD NAV IN MODAL ── */
+function setupModalKeyboard() {
+  const statusBtns = () => [...document.querySelectorAll('.status-btn')]
+  const prioBtns   = () => [...document.querySelectorAll('.prio-btn')]
+
+  document.querySelectorAll('.status-btn').forEach((btn, i, arr) => {
+    btn.addEventListener('keydown', e => {
+      if (e.key==='ArrowRight') { e.preventDefault(); arr[(i+1)%arr.length].focus() }
+      if (e.key==='ArrowLeft')  { e.preventDefault(); arr[(i-1+arr.length)%arr.length].focus() }
+      if (e.key===' ')          { e.preventDefault(); setActiveStatus(btn.dataset.s); document.getElementById('taskTitle').focus() }
+      if (e.ctrlKey && e.key==='Enter') { e.preventDefault(); saveTask() }
+    })
+  })
+
+  document.getElementById('taskTitle').addEventListener('keydown', e => {
+    if (e.key==='Enter' && !e.ctrlKey)  { e.preventDefault(); document.getElementById('taskDesc').focus() }
+    if (e.ctrlKey && e.key==='Enter')   { e.preventDefault(); saveTask() }
+  })
+
+  document.getElementById('taskDesc').addEventListener('keydown', e => {
+    if (e.key==='Enter' && !e.shiftKey && !e.ctrlKey) { e.preventDefault(); prioBtns()[0]?.focus() }
+    if (e.ctrlKey && e.key==='Enter') { e.preventDefault(); saveTask() }
+  })
+
+  document.querySelectorAll('.prio-btn').forEach((btn, i, arr) => {
+    btn.addEventListener('keydown', e => {
+      if (e.key==='ArrowRight') { e.preventDefault(); arr[(i+1)%arr.length].focus() }
+      if (e.key==='ArrowLeft')  { e.preventDefault(); arr[(i-1+arr.length)%arr.length].focus() }
+      if (e.key===' ') { e.preventDefault(); selectedPriority=btn.dataset.p; renderPrioBtns(); document.getElementById('taskDate').focus() }
+      if (e.ctrlKey && e.key==='Enter') { e.preventDefault(); saveTask() }
+    })
+  })
+
+  document.getElementById('taskDate').addEventListener('keydown', e => {
+    if (e.key==='Enter' && !e.ctrlKey) { e.preventDefault(); document.getElementById('assigneeList').querySelector('.assignee-check')?.focus() }
+    if (e.ctrlKey && e.key==='Enter')  { e.preventDefault(); saveTask() }
+  })
+}
+
+/* ── NOTIFICATIONS ── */
+async function loadNotifications() {
+  if (!currentUser) return
+  notifications = await getNotifications(currentUser.id)
+  renderNotifications()
+}
+
+function renderNotifications() {
+  const list = document.getElementById('notifList')
+  const unread = notifications.filter(n => !n.is_read)
+  const badge = document.getElementById('notifBadge')
+
+  if (unread.length) { badge.textContent = unread.length; badge.classList.add('visible') }
+  else { badge.classList.remove('visible') }
+
+  list.innerHTML = ''
+  if (!notifications.length) { list.innerHTML = '<div class="notif-empty">Belum ada notifikasi</div>'; return }
+
+  notifications.forEach(n => {
+    const item = document.createElement('div')
+    item.className = 'notif-item' + (!n.is_read ? ' unread' : '')
+    item.innerHTML = `
+      <div class="notif-item-body">
+        <p class="notif-msg">${n.message||'Notifikasi baru'}</p>
+        <p class="notif-time">${new Date(n.created_at).toLocaleString('id-ID')}</p>
+      </div>
+      ${!n.is_read ? `<button class="notif-read-btn" data-id="${n.id}">Dibaca</button>` : ''}
+    `
+    item.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('notif-read-btn')) {
+        e.stopPropagation(); await markNotificationRead(n.id); await loadNotifications(); return
+      }
+      if (n.task_id) {
+        document.getElementById('notifPanel').classList.remove('open')
+        await openEditModal(n.task_id)
+        if (!n.is_read) { await markNotificationRead(n.id); await loadNotifications() }
+      }
+    })
+    list.appendChild(item)
+  })
+}
+
+/* ── LOAD ── */
+async function loadTasks() {
+  ;[activeTasks, doneTasks] = await Promise.all([getActiveTasks(), getTodayDoneTasks()])
+  renderCurrentView()
+  updateTopbarSub()
+}
+
+function renderCurrentView() {
+  if      (currentView === 'kanban')   renderKanban()
+  else if (currentView === 'priority') renderPriorityView()
+  else if (currentView === 'my')       renderMyTasks()
+  else if (currentView === 'backlog')  renderBacklog()
+  else if (currentView === 'tim')      renderTimView()
+}
+
+function updateTopbarSub() {
+  document.getElementById('topbarSub').textContent =
+    `${activeTasks.length} aktif · ${doneTasks.length} selesai hari ini · sync otomatis`
+}
+
+/* ── NAV ── */
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'))
+    item.classList.add('active')
+    currentView = item.dataset.view
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+    const viewIds = { kanban:'kanbanView', priority:'priorityView', my:'myView', backlog:'backlogView', tim:'timView' }
+    const titles  = { kanban:'Dashboard', priority:'Dashboard', my:'My tasks', backlog:'Backlog', tim:'Tim view' }
+    const isDash  = currentView === 'kanban' || currentView === 'priority'
+    document.getElementById(viewIds[currentView]||'kanbanView').classList.add('active')
+    document.getElementById('topbarTitle').textContent = titles[currentView]||''
+    document.getElementById('dashControls').style.display = isDash ? 'flex' : 'none'
+    renderCurrentView()
+  })
+})
+
+document.querySelectorAll('.sort-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active'); dashSort = btn.dataset.sort; renderCurrentView()
+  })
+})
+
+document.querySelectorAll('.view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active'); currentView = btn.dataset.vt
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+    document.getElementById(currentView==='kanban' ? 'kanbanView' : 'priorityView').classList.add('active')
+    renderCurrentView()
+  })
+})
+
+/* ── MODAL EVENTS ── */
+document.querySelectorAll('.status-btn').forEach(btn => btn.addEventListener('click', () => setActiveStatus(btn.dataset.s)))
+document.querySelectorAll('.prio-btn').forEach(btn => btn.addEventListener('click', () => { selectedPriority=btn.dataset.p; renderPrioBtns() }))
+
+document.getElementById('fab').addEventListener('click', openCreateModal)
+document.getElementById('modalClose').addEventListener('click', closeModal)
+document.getElementById('btnCancel').addEventListener('click', closeModal)
+document.getElementById('btnSave').addEventListener('click', saveTask)
+document.getElementById('taskModal').addEventListener('click', e => { if (e.target.id==='taskModal') closeModal() })
+document.getElementById('btnDelete').addEventListener('click', async () => {
+  if (!editingTaskId || !confirm('Hapus task ini?')) return
+  await deleteTask(editingTaskId); closeModal(); await loadTasks()
+})
+
+/* ── GLOBAL SHORTCUTS ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'n' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+    e.preventDefault(); openCreateModal()
+  }
+  if (e.key === 'Escape') closeModal()
+})
+
+/* ── NOTIF PANEL ── */
+document.getElementById('notifBtn').addEventListener('click', (e) => {
+  e.stopPropagation()
+  document.getElementById('notifPanel').classList.toggle('open')
+})
+document.getElementById('markAllRead').addEventListener('click', async () => {
+  await markAllNotificationsRead(currentUser.id); await loadNotifications()
+})
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('notifPanel')
+  if (!panel.contains(e.target) && !document.getElementById('notifBtn').contains(e.target))
+    panel.classList.remove('open')
+})
+
+/* ── RESPONSIVE ── */
+window.addEventListener('resize', () => {
+  if (window.innerWidth <= 700 && currentView === 'kanban') {
+    currentView = 'priority'
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'))
+    document.getElementById('priorityView').classList.add('active')
+    renderPriorityView()
+  }
+})
+
+/* ── INIT ── */
+async function init() {
+  const { requireAuth, signOut: so, upsertProfile: up, getAllProfiles: gap } = await import('./js/auth.js')
+  const session = await requireAuth()
+  if (!session) return
+
+  currentUser = session.user
+  allProfiles = await gap()
+  let currentProfile = allProfiles.find(p => p.id === currentUser.id)
+
+  if (!currentProfile) {
+    const name = currentUser.email.split('@')[0]
+    const color = COLORS[Math.floor(Math.random() * COLORS.length)]
+    await up(currentUser.id, name, color)
+    allProfiles = await gap(); currentProfile = allProfiles.find(p => p.id === currentUser.id)
+  }
+
+  const userEl = document.getElementById('sidebarUser')
+  userEl.appendChild(avatarEl(currentProfile, 32))
+  const info = document.createElement('div'); info.className = 'user-info'
+  info.innerHTML = `<p>${currentProfile?.name||'User'}</p><span>Online</span>`
+  userEl.appendChild(info)
+
+  const logout = document.createElement('span'); logout.className = 'btn-logout'; logout.title = 'Keluar'
+  logout.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>`
+  logout.addEventListener('click', () => { if (confirm('Yakin mau logout dari ITH Planner?')) so() })
+  userEl.appendChild(logout)
+
+  document.getElementById('dashControls').style.display = 'flex'
+  setupTimViewFilters(); setupModalKeyboard()
+  await loadTasks(); await loadNotifications()
+
+  subscribeToTasks(async () => {
+    await loadTasks()
+    if (currentView === 'backlog') renderBacklog()
+    if (currentView === 'tim')    renderTimView()
+  })
+
+  subscribeToNotifications(currentUser.id, async () => { await loadNotifications() })
+}
+
+init()
+</script>
+</body>
+</html>

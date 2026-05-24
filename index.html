@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Master Planner — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --border-hover: #3d3d3d;
+      --text: #e8e6e0;
+      --text-muted: #7a7870;
+      --accent: #c9b99a;
+      --accent-dim: #8a7a66;
+      --danger: #c0574a;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .brand {
+      margin-bottom: 40px;
+    }
+
+    .brand-name {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .brand-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus {
+      border-color: var(--accent-dim);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #0f0f0f;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.15s;
+    }
+
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .error-msg {
+      font-size: 13px;
+      color: var(--danger);
+      margin-top: 12px;
+      display: none;
+    }
+
+    .footer-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 28px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <div class="brand">
+      <p class="brand-name">Master Planner</p>
+      <p class="brand-sub">Masuk ke workspace tim kamu</p>
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="kamu@email.com" autocomplete="email" />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn-primary" id="loginBtn">Masuk</button>
+    <p class="error-msg" id="errorMsg"></p>
+
+    <p class="footer-note">Belum punya akun? Minta invite dari admin tim.</p>
+  </div>
+
+  <script type="module">
+    import { signIn, getSession } from './js/auth.js'
+
+    getSession().then(session => {
+      if (session) window.location.href = 'app.html'
+    })
+
+    const btn = document.getElementById('loginBtn')
+    const errorMsg = document.getElementById('errorMsg')
+
+    document.getElementById('password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') btn.click()
+    })
+
+    btn.addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim()
+      const password = document.getElementById('password').value
+      errorMsg.style.display = 'none'
+
+      if (!email || !password) {
+        errorMsg.textContent = 'Email dan password wajib diisi.'
+        errorMsg.style.display = 'block'
+        return
+      }
+
+      btn.disabled = true
+      btn.textContent = 'Memuat...'
+
+      try {
+        await signIn(email, password)
+        window.location.href = 'app.html'
+      } catch (err) {
+        errorMsg.textContent = 'Email atau password salah.'
+        errorMsg.style.display = 'block'
+        btn.disabled = false
+        btn.textContent = 'Masuk'
+      }
+    })
+  </script>
+</body>
+</html>
