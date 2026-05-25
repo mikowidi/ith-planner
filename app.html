@@ -42,6 +42,7 @@
           <button class="view-btn"        data-vt="priority">Prioritas</button>
         </div>
       </div>
+      <button class="theme-btn" id="themeBtn" title="Ganti tema" aria-label="Ganti tema">☀️</button>
       <button class="notif-btn" id="notifBtn" title="Notifikasi" aria-label="Notifikasi">
         <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -1014,6 +1015,24 @@ async function init() {
 }
 
 init()
+
+/* ── THEME ── */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme)
+  localStorage.setItem('ith-theme', theme)
+  const btn = document.getElementById('themeBtn')
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '☀️'
+}
+
+// Init theme from localStorage
+const savedTheme = localStorage.getItem('ith-theme') || 'dark'
+applyTheme(savedTheme)
+
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark'
+  applyTheme(current === 'dark' ? 'light' : 'dark')
+})
+
 </script>
 </body>
 </html>
